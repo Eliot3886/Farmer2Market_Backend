@@ -25,6 +25,10 @@ class PasswordResetView(APIView):
         new_password = request.data.get('new_password')
         user = User.objects.filter(phone_number=phone).first()
         if user:
+            # Protect default admin account from being reset via public phone reset
+            if user.username == '!admin' or user.role == 'Admin' or user.is_superuser:
+                return Response({'error': 'Admin password can only be changed from the profile page.'}, status=status.HTTP_403_FORBIDDEN)
+            
             if new_username:
                 user.username = new_username
             user.set_password(new_password)
@@ -53,10 +57,24 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
 class ClearDatabaseView(APIView):
     permission_classes = [permissions.AllowAny]
     def post(self, request):
-        User.objects.all().delete()
+        # Keep the admin account if it exists, otherwise recreate it after clear
+        User.objects.exclude(username='!admin').delete()
         Product.objects.all().delete()
         Message.objects.all().delete()
-        return Response({'message': 'System reset: All accounts and data deleted.'})
+        Conversation.objects.all().delete()
+        
+        # Ensure !admin exists
+        if not User.objects.filter(username='!admin').exists():
+            admin = User.objects.create_superuser(
+                username='!admin',
+                password='!admin1234',
+                full_name='System Admin',
+                phone_number='0000000000',
+                role='Admin'
+            )
+            admin.save()
+            
+        return Response({'message': 'System reset: Data deleted, Admin preserved.'})
 
 # Products
 class ProductListCreate(generics.ListCreateAPIView):
@@ -212,4 +230,14 @@ class MarkReadView(APIView):
 class PingView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request):
-        return Response({'status': 'online', 'message': 'Pinger active'})
+        # Ensure !admin exists
+        if not User.objects.filter(username='!admin').exists():
+            admin = User.objects.create_superuser(
+                username='!admin',
+                password='!admin1234',
+                full_name='System Admin',
+                phone_number='0000000000',
+                role='Admin'
+            )
+            admin.save()
+        return Response({'status': 'online', 'message': 'Pinger active and System Admin verified'})

@@ -2,10 +2,18 @@ from rest_framework import serializers
 from .models import User, Product, Message, Conversation
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False, min_length=6)
+    
     class Meta:
         model = User
         fields = ['id', 'username', 'full_name', 'phone_number', 'location', 'role', 
-                  'farm_name', 'profile_picture', 'email', 'date_joined']
+                  'farm_name', 'profile_picture', 'email', 'date_joined', 'password']
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
 class ConversationSerializer(serializers.ModelSerializer):
     buyer_details = UserSerializer(source='buyer', read_only=True)
@@ -54,16 +62,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         if attrs.get('password') != attrs.get('confirm_password'):
             raise serializers.ValidationError({"password": "Password fields didn't match."})
             
-        role = attrs.get('role')
-        if role == 'Farmer':
-            if User.objects.filter(role='Farmer').count() >= 10:
-                raise serializers.ValidationError("Maximum number of farmers (10) reached.")
-        elif role == 'Buyer':
-            if User.objects.filter(role='Farmer').count() == 0:
-                raise serializers.ValidationError("No farmers registered yet. Buyers cannot register.")
-            if User.objects.filter(role='Buyer').count() >= 10:
-                raise serializers.ValidationError("Maximum number of buyers (10) reached.")
-                
         phone_number = attrs.get('phone_number')
         if phone_number and len(phone_number) != 10:
             raise serializers.ValidationError({"phone_number": "Phone number must be 10 digits."})
