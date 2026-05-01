@@ -68,7 +68,6 @@ python -m venv venv
 ### 3. Activate environment
 ```
 venv\Scripts\activate   # Windows
-source venv/bin/activate  # Mac/Linux
 ```
 
 ### 4. Install dependencies
@@ -128,11 +127,13 @@ This project was built as a learning project to understand:
 ## 👨‍💻 Author
 Eliot Chitowamombe
 
+
 ---
 
 ## 📌 Future Improvements
 - Payment integration
-- Product image upload
 - Advanced search & filtering
-- Mobile app integration
+- Web based app
+- Improve overall layout to professional level
+- Log in system to continue with email(google)
 ```
