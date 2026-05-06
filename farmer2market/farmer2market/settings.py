@@ -105,7 +105,7 @@ WSGI_APPLICATION = 'farmer2market.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///db.sqlite3',
-        conn_max_age=600,
+        conn_max_age=int(os.environ.get('CONN_MAX_AGE', 0)),
         conn_health_checks=True,
     )
 }
